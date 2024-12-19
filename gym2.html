@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打地鼠遊戲</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+        }
+
+        #gameArea {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            border: 2px solid #333;
+            margin: 20px auto;
+            background-color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .mole {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #28a745;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .score {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>打地鼠遊戲</h1>
+    <div id="gameArea"></div>
+    <button onclick="startGame()">開始遊戲</button>
+    <div class="score">總分數：<span id="score">0</span></div>
+
+    <script>
+        let score = 0;
+        let gameInterval;
+        let moleInterval;
+        const gameDuration = 30000; // 遊戲時間 30 秒
+        const moleLifetime = 1000; // 地鼠存在時間 1 秒
+
+        // 隨機生成地鼠
+        function spawnMole() {
+            const gameArea = document.getElementById('gameArea');
+            const mole = document.createElement('div');
+            mole.className = 'mole';
+
+            const gameAreaWidth = gameArea.offsetWidth;
+            const gameAreaHeight = gameArea.offsetHeight;
+
+            const randomX = Math.random() * (gameAreaWidth - 50); // 減去地鼠的寬度
+            const randomY = Math.random() * (gameAreaHeight - 50); // 減去地鼠的高度
+
+            mole.style.left = `${randomX}px`;
+            mole.style.top = `${randomY}px`;
+
+            // 點擊地鼠事件
+            mole.addEventListener('click', () => {
+                score++;
+                document.getElementById('score').textContent = score;
+                gameArea.removeChild(mole);
+            });
+
+            gameArea.appendChild(mole);
+
+            // 地鼠存在時間結束後移除
+            setTimeout(() => {
+                if (gameArea.contains(mole)) {
+                    gameArea.removeChild(mole);
+                }
+            }, moleLifetime);
+        }
+
+        // 開始遊戲
+        function startGame() {
+            const gameArea = document.getElementById('gameArea');
+            score = 0;
+            document.getElementById('score').textContent = score;
+
+            // 清空遊戲區域
+            gameArea.innerHTML = '';
+
+            // 地鼠生成間隔
+            moleInterval = setInterval(spawnMole, 500);
+
+            // 結束遊戲
+            setTimeout(() => {
+                clearInterval(moleInterval);
+                alert(`遊戲結束！總分數：${score}`);
+            }, gameDuration);
+        }
+    </script>
+</body>
+</html>

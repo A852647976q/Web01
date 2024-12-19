@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數獨遊戲生成器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            gap: 1px;
+            justify-content: center;
+            background-color: #333;
+            padding: 5px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            outline: none;
+        }
+
+        .cell.read-only {
+            background-color: #ddd;
+            color: #555;
+            pointer-events: none;
+        }
+
+        .cell.error {
+            color: red;
+        }
+
+        .thick-border {
+            border-width: 2px;
+            border-color: #000;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>數獨遊戲生成器</h1>
+    <div class="board" id="board"></div>
+    <button onclick="generateSudoku()">生成新遊戲</button>
+    <button onclick="revealAnswers()">公布所有正確答案</button>
+
+    <script>
+        let solutionBoard = [];
+        let puzzleBoard = [];
+
+        // 初始化空數獨棋盤
+        function createEmptyBoard() {
+            return Array.from({ length: 9 }, () => Array(9).fill(0));
+        }
+
+        // 檢查數字是否可以放置
+        function isValid(board, row, col, num) {
+            for (let i = 0; i < 9; i++) {
+                if (board[row][i] === num || board[i][col] === num) return false;
+                const boxRow = Math.floor(row / 3) * 3 + Math.floor(i / 3);
+                const boxCol = Math.floor(col / 3) * 3 + (i % 3);
+                if (board[boxRow][boxCol] === num) return false;
+            }
+            return true;
+        }
+
+        // 填充棋盤
+        function fillBoard(board) {
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (board[row][col] === 0) {
+                        const nums = Array.from({ length: 9 }, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+                        for (const num of nums) {
+                            if (isValid(board, row, col, num)) {
+                                board[row][col] = num;
+                                if (fillBoard(board)) return true;
+                                board[row][col] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // 隨機移除數字
+        function removeNumbers(board, clues = 30) {
+            const totalCells = 81;
+            const cellsToRemove = totalCells - clues;
+
+            for (let i = 0; i < cellsToRemove; i++) {
+                let row, col;
+                do {
+                    row = Math.floor(Math.random() * 9);
+                    col = Math.floor(Math.random() * 9);
+                } while (board[row][col] === 0);
+                board[row][col] = 0;
+            }
+        }
+
+        // 渲染棋盤
+        function renderBoard(board) {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+
+            board.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    const cellElement = document.createElement('input');
+                    cellElement.type = 'text';
+                    cellElement.maxLength = 1;
+                    cellElement.className = 'cell';
+                    cellElement.dataset.row = rowIndex;
+                    cellElement.dataset.col = colIndex;
+
+                    if (cell !== 0) {
+                        cellElement.value = cell;
+                        cellElement.classList.add('read-only');
+                    }
+
+                    cellElement.addEventListener('input', () => validateInput(cellElement));
+                    boardElement.appendChild(cellElement);
+
+                    // 粗線分隔
+                    if (rowIndex % 3 === 0 && rowIndex !== 0) {
+                        cellElement.style.borderTop = '2px solid black';
+                    }
+                    if (colIndex % 3 === 0 && colIndex !== 0) {
+                        cellElement.style.borderLeft = '2px solid black';
+                    }
+                });
+            });
+        }
+
+        // 驗證輸入
+        function validateInput(cellElement) {
+            const row = parseInt(cellElement.dataset.row);
+            const col = parseInt(cellElement.dataset.col);
+            const value = parseInt(cellElement.value);
+
+            if (isNaN(value) || value < 1 || value > 9 || !isValid(puzzleBoard, row, col, value)) {
+                cellElement.classList.add('error');
+            } else {
+                cellElement.classList.remove('error');
+                puzzleBoard[row][col] = value;
+            }
+        }
+
+        // 生成新數獨
+        function generateSudoku() {
+            solutionBoard = createEmptyBoard();
+            fillBoard(solutionBoard);
+
+            puzzleBoard = solutionBoard.map(row => [...row]);
+            removeNumbers(puzzleBoard);
+            renderBoard(puzzleBoard);
+        }
+
+        // 公布答案
+        function revealAnswers() {
+            renderBoard(solutionBoard);
+        }
+
+        // 初始生成數獨
+        generateSudoku();
+    </script>
+</body>
+</html>
